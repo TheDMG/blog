@@ -1,0 +1,19 @@
+{{- $currentPage := .currentPage -}}
+{{- $section := .section -}}
+
+{{- /* Get all subsections */ -}}
+{{- range $section.Sections }}
+<li>
+  <span class="folder">{{ .Title }}</span>
+  <ul class="folder-contents">
+    {{- partial "file-tree.html" (dict "section" . "currentPage" $currentPage) -}}
+  </ul>
+</li>
+{{- end }}
+
+{{- /* Get all pages in this section (excluding _index) */ -}}
+{{- range $section.RegularPages }}
+<li class="file">
+  <a href="{{ .RelPermalink }}"{{ if eq .RelPermalink $currentPage.RelPermalink }} class="active"{{ end }}>{{ .Title }}</a>
+</li>
+{{- end }}

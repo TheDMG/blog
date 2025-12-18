@@ -1,0 +1,48 @@
+{{ define "main" }}
+<h1>{{ .Site.Title }}</h1>
+
+<p>Welcome to My Blog</p>
+<!--
+ <ul>
+
+  <li>all posts
+    <ul>
+      {{ range first 5 (where .Site.RegularPages "Section" "posts") }}
+      <li>{{ .Date.Format "2006-01-02" }} <a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+      {{ end }}
+      {{ if gt (len (where .Site.RegularPages "Section" "posts")) 5 }}
+      <li><a href="{{ "posts/" | relURL }}">See archive...</a></li>
+      {{ end }}
+    </ul>
+  </li>
+
+  <li>posts by category
+    <ul>
+      {{ range .Site.Taxonomies.categories }}
+      {{ range first 3 .Pages }}
+      <li>{{ .Date.Format "2006-01-02" }} <a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+      {{ end }}
+      {{ end }}
+      {{ if .Site.Taxonomies.categories }}
+      <li><a href="{{ "categories/" | relURL }}">See all categories...</a></li>
+      {{ end }}
+    </ul>
+  </li>
+
+  <li>posts by tag
+    <ul>
+      {{ range .Site.Taxonomies.tags }}
+      {{ range first 2 .Pages }}
+      <li>{{ .Date.Format "2006-01-02" }} <a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+      {{ end }}
+      {{ end }}
+      {{ if .Site.Taxonomies.tags }}
+      <li><a href="{{ "tags/" | relURL }}">See all tags...</a></li>
+      {{ end }}
+    </ul>
+  </li>
+
+  <li><a href="{{ "index.xml" | relURL }}">rss</a></li>
+</ul> 
+ -->
+{{ end }}

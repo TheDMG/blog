@@ -1,0 +1,52 @@
+baseURL = ''
+languageCode = 'en-us'
+title = 'D.M.G. Blog'
+
+# Enable TOC by default
+[markup]
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 4
+    ordered = false
+
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
+# Taxonomies
+[taxonomies]
+  category = 'categories'
+  tag = 'tags'
+
+# Output formats for search
+[outputs]
+  home = ['HTML', 'RSS', 'JSON']
+
+# Pagination
+[pagination]
+  pagerSize = 10
+
+# Menu
+[menus]
+  [[menus.main]]
+    name = 'Home'
+    pageRef = '/'
+    weight = 10
+  [[menus.main]]
+    name = 'Posts'
+    pageRef = '/posts'
+    weight = 20
+  [[menus.main]]
+    name = 'Categories'
+    pageRef = '/categories'
+    weight = 30
+  [[menus.main]]
+    name = 'Tags'
+    pageRef = '/tags'
+    weight = 40
+
+# Params
+[params]
+  description = 'TheDMG Blog Site'
+  showToc = true
+  showReadingTime = true

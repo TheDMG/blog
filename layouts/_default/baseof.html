@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.LanguageCode }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} | {{ .Site.Title }}{{ end }}</title>
+  <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
+  <style>
+    body {
+      font-family: monospace;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      max-width: 70ch;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    a { color: blue; }
+    a:visited { color: purple; }
+
+    /* Code */
+    code {
+      background: #f5f5f5;
+      padding: 0.15em 0.4em;
+      border: 1px solid #ddd;
+      font-size: 0.9em;
+    }
+    pre {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      padding: 1rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    /* Blockquote */
+    blockquote {
+      border-left: 3px solid #888;
+      margin: 1rem 0;
+      padding: 0.5rem 1rem;
+      background: #f5f5f5;
+    }
+    blockquote p {
+      margin: 0;
+    }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: left;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+
+    /* File Tree Sidebar */
+    .sidebar-toggle {
+      position: fixed;
+      top: 1.5rem;
+      right: 5rem;
+      width: 42px;
+      height: 42px;
+      border-radius: 4px;
+      border: 2px solid #555;
+      background: #f5f5f5;
+      color: #555;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      box-shadow: 3px 3px 0 #555;
+      transition: all 0.15s ease;
+      z-index: 100;
+    }
+    .sidebar-toggle span {
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: #555;
+      transition: all 0.2s ease;
+    }
+    .sidebar-toggle:hover {
+      background: #eee;
+      transform: translate(1px, 1px);
+      box-shadow: 2px 2px 0 #555;
+    }
+    .sidebar-toggle.active span:nth-child(1) {
+      transform: rotate(45deg) translate(4px, 4px);
+    }
+    .sidebar-toggle.active span:nth-child(2) {
+      opacity: 0;
+    }
+    .sidebar-toggle.active span:nth-child(3) {
+      transform: rotate(-45deg) translate(4px, -4px);
+    }
+
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      z-index: 150;
+    }
+    .sidebar-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 300px;
+      height: 100vh;
+      background: #fff;
+      border-left: 2px solid #555;
+      box-shadow: -4px 0 10px rgba(0,0,0,0.1);
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      z-index: 200;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+    .sidebar.active {
+      transform: translateX(0);
+    }
+    .sidebar-header {
+      font-weight: bold;
+      padding-bottom: 0.75rem;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .file-tree {
+      font-size: 0.95rem;
+    }
+    .file-tree ul {
+      list-style: none;
+      padding-left: 1rem;
+      margin: 0;
+    }
+    .file-tree > ul {
+      padding-left: 0;
+    }
+    .file-tree li {
+      margin: 0.25rem 0;
+    }
+    .file-tree a {
+      text-decoration: none;
+      color: #333;
+    }
+    .file-tree a:hover {
+      color: blue;
+    }
+    .file-tree a.active {
+      font-weight: bold;
+      color: blue;
+    }
+    .folder {
+      cursor: pointer;
+      user-select: none;
+    }
+    .folder::before {
+      content: '▸ ';
+      display: inline-block;
+      transition: transform 0.2s ease;
+    }
+    .folder.open::before {
+      transform: rotate(90deg);
+    }
+    .folder-contents {
+      display: none;
+    }
+    .folder.open + .folder-contents {
+      display: block;
+    }
+    .file::before {
+      content: '  ';
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 3rem;
+      padding: 2rem 0;
+      border-top: 1px solid #ddd;
+      text-align: center;
+    }
+    .footer-icons {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+    }
+    .footer-icons a {
+      color: #555;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+    .footer-icons a:hover {
+      color: #333;
+      transform: translateY(-2px);
+    }
+
+    /* Search Button */
+    .search-toggle {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      width: 42px;
+      height: 42px;
+      border-radius: 4px;
+      border: 2px solid #555;
+      background: #f5f5f5;
+      color: #555;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 3px 3px 0 #555;
+      transition: all 0.15s ease;
+      z-index: 100;
+    }
+    .search-toggle:hover {
+      background: #eee;
+      transform: translate(1px, 1px);
+      box-shadow: 2px 2px 0 #555;
+    }
+    .search-toggle:active {
+      transform: translate(3px, 3px);
+      box-shadow: none;
+    }
+
+    /* Search Modal */
+    .search-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      z-index: 200;
+    }
+    .search-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .search-modal {
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-10px);
+      width: 94%;
+      max-width: 640px;
+      font-family: monospace;
+      font-size: 1.1rem;
+      background: #fff;
+      border: 2px solid #555;
+      box-shadow: 6px 6px 0 #555;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      z-index: 300;
+      overflow: hidden;
+    }
+    .search-modal.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .search-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #ddd;
+      background: #f5f5f5;
+    }
+    .search-header svg {
+      color: #666;
+      flex-shrink: 0;
+    }
+    .search-header input {
+      flex: 1;
+      border: none;
+      background: none;
+      font-size: inherit;
+      font-family: inherit;
+      color: #333;
+      outline: none;
+    }
+    .search-header input::placeholder {
+      color: #999;
+    }
+    .search-header kbd {
+      font-family: monospace;
+      font-size: 0.7rem;
+      padding: 3px 6px;
+      background: #fff;
+      border: 1px solid #ccc;
+      color: #666;
+    }
+
+    #search-results {
+      max-height: 320px;
+      overflow-y: auto;
+      background: #fff;
+    }
+    #search-results:empty::before {
+      content: 'Type to search...';
+      display: block;
+      padding: 24px;
+      text-align: center;
+      color: #999;
+    }
+    #search-results .result-item {
+      display: block;
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+      text-decoration: none;
+      transition: background 0.15s ease;
+    }
+    #search-results .result-item:hover {
+      background: #f5f5f5;
+    }
+    #search-results .result-title {
+      color: #333;
+      font-weight: 500;
+    }
+    #search-results .result-meta {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 3px;
+    }
+    #search-results .no-results {
+      padding: 24px;
+      text-align: center;
+      color: #999;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body { background: #111; color: #eee; }
+      a { color: #6cf; }
+      a:visited { color: #c9f; }
+      code { background: #222; border-color: #444; }
+      pre { background: #222; border-color: #444; }
+      blockquote { background: #222; border-color: #666; }
+      th, td { border-color: #444; }
+      th { background: #222; }
+      tr:nth-child(even) { background: #1a1a1a; }
+      .footer { border-top-color: #444; }
+      .footer-icons a { color: #888; }
+      .footer-icons a:hover { color: #eee; }
+      .sidebar-toggle { background: #222; border-color: #666; box-shadow: 3px 3px 0 #666; }
+      .sidebar-toggle span { background: #ccc; }
+      .sidebar-toggle:hover { background: #333; }
+      .sidebar { background: #1a1a1a; border-left-color: #666; }
+      .sidebar-header { border-bottom-color: #444; }
+      .file-tree a { color: #eee; }
+      .file-tree a:hover, .file-tree a.active { color: #6cf; }
+      .search-toggle { background: #222; border-color: #666; color: #ccc; box-shadow: 3px 3px 0 #666; }
+      .search-toggle:hover { background: #333; }
+      .search-modal { background: #1a1a1a; border-color: #666; box-shadow: 6px 6px 0 #666; }
+      .search-header { background: #222; border-bottom-color: #444; }
+      .search-header input { color: #eee; }
+      .search-header input::placeholder { color: #888; }
+      .search-header kbd { background: #1a1a1a; border-color: #444; color: #888; }
+      #search-results { background: #1a1a1a; }
+      #search-results .result-item { border-bottom-color: #333; }
+      #search-results .result-item:hover { background: #222; }
+      #search-results .result-title { color: #eee; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="search-overlay" id="search-overlay" onclick="toggleSearch()"></div>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" title="File Tree">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <button class="search-toggle" onclick="toggleSearch()" title="Search (Ctrl+K)">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"></circle>
+      <path d="m21 21-4.3-4.3"></path>
+    </svg>
+  </button>
+
+  <div class="search-modal" id="search-modal">
+    <div class="search-header">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.3-4.3"></path>
+      </svg>
+      <input type="text" id="search-input" placeholder="Search posts..." autocomplete="off">
+      <kbd>ESC</kbd>
+    </div>
+    <div id="search-results"></div>
+  </div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">Files</div>
+    <nav class="file-tree">
+      {{ $currentPage := . }}
+      <ul>
+        {{ range .Site.Sections }}
+        {{ if eq .Section "posts" }}
+        <li>
+          <span class="folder open">{{ .Title }}</span>
+          <ul class="folder-contents" style="display:block;">
+            {{ partial "file-tree.html" (dict "section" . "currentPage" $currentPage) }}
+          </ul>
+        </li>
+        {{ end }}
+        {{ end }}
+      </ul>
+    </nav>
+  </aside>
+
+  {{ block "main" . }}{{ end }}
+
+  <footer class="footer">
+    <div class="footer-icons">
+      <a href="https://github.com/TheDMG" target="_blank" rel="noopener" title="GitHub">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+      </a>
+      <a href="https://linkedin.com/in/thedmg" target="_blank" rel="noopener" title="LinkedIn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+        </svg>
+      </a>
+    </div>
+  </footer>
+
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const toggle = document.getElementById('sidebar-toggle');
+      const overlay = document.getElementById('sidebar-overlay');
+      sidebar.classList.toggle('active');
+      toggle.classList.toggle('active');
+      overlay.classList.toggle('active');
+    }
+
+    function toggleSearch() {
+      const modal = document.getElementById('search-modal');
+      const overlay = document.getElementById('search-overlay');
+      const isActive = modal.classList.contains('active');
+      modal.classList.toggle('active');
+      overlay.classList.toggle('active');
+      document.body.style.overflow = isActive ? '' : 'hidden';
+      if (!isActive) document.getElementById('search-input').focus();
+    }
+
+    // Folder toggle
+    document.querySelectorAll('.folder').forEach(folder => {
+      folder.addEventListener('click', () => {
+        folder.classList.toggle('open');
+        const contents = folder.nextElementSibling;
+        if (contents && contents.classList.contains('folder-contents')) {
+          contents.style.display = folder.classList.contains('open') ? 'block' : 'none';
+        }
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (document.getElementById('search-modal').classList.contains('active')) toggleSearch();
+        if (document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); toggleSearch(); }
+    });
+  </script>
+  <script src="{{ "js/search.js" | relURL }}"></script>
+</body>
+</html>

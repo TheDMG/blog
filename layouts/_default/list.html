@@ -1,0 +1,17 @@
+{{ define "main" }}
+<p><a href="{{ .Site.BaseURL }}">&larr; {{ .Site.Title }}</a></p>
+
+<h1>{{ .Title }}</h1>
+
+{{ if .Content }}
+{{ .Content }}
+{{ end }}
+
+<ul>
+  {{ range .Pages }}
+  <li>{{ .Date.Format "2006-01-02" }} <a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+  {{ end }}
+</ul>
+
+{{ template "_internal/pagination.html" . }}
+{{ end }}

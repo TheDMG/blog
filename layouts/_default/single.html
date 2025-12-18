@@ -1,0 +1,38 @@
+{{ define "main" }}
+<p><a href="{{ .Site.BaseURL }}">&larr; Home</a></p>
+
+<h1>{{ .Title }}</h1>
+
+<p>{{ .Date.Format "2006-01-02" }}{{ if .Site.Params.showReadingTime }} · {{ .ReadingTime }} min read{{ end }}</p>
+
+{{ with .Params.categories }}
+<p>categories: {{ range $i, $c := . }}{{ if $i }}, {{ end }}<a href="{{ "/categories/" | relURL }}{{ $c | urlize }}/">{{ $c }}</a>{{ end }}</p>
+{{ end }}
+
+{{ with .Params.tags }}
+<p>tags: {{ range $i, $t := . }}{{ if $i }}, {{ end }}<a href="{{ "/tags/" | relURL }}{{ $t | urlize }}/">{{ $t }}</a>{{ end }}</p>
+{{ end }}
+
+{{ if and .Site.Params.showToc .TableOfContents }}
+{{ if ne .Params.toc false }}
+<hr>
+<details>
+  <summary>table of contents</summary>
+  {{ .TableOfContents }}
+</details>
+<hr>
+{{ end }}
+{{ end }}
+
+{{ .Content }}
+
+<hr>
+
+<!-- next and previous to the current location
+<p>
+{{ with .PrevInSection }}<a href="{{ .RelPermalink }}">&larr; {{ .Title }}</a>{{ end }}
+{{ if and .PrevInSection .NextInSection }} | {{ end }}
+{{ with .NextInSection }}<a href="{{ .RelPermalink }}">{{ .Title }} &rarr;</a>{{ end }}
+</p>
+-->
+{{ end }}
